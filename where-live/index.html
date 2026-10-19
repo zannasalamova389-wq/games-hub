@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кто где живёт — Игра для детей</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <h1>Кто где живёт</h1>
+        <p>Посмотри на животное и выбери, где оно живёт</p>
+        <button id="sound-toggle" class="sound-btn">🔊 Звук вкл</button>
+    </header>
+
+    <main>
+        <div class="stats">
+            <p>Вопрос: <span id="question-num">1</span> / <span id="question-total">8</span></p>
+            <p>Очки: <span id="score">0</span></p>
+        </div>
+
+        <div class="game-container">
+            <div class="image-wrapper">
+                <img id="question-image" src="" alt="Кто это?">
+            </div>
+
+            <div class="answers" id="answers"></div>
+
+            <div class="feedback" id="feedback"></div>
+        </div>
+
+        <div class="win-message" id="win-message">
+            <h2 id="win-title">🎉 Молодец!</h2>
+            <p>Ты угадал: <span id="final-score">0</span> из <span id="final-total">8</span></p>
+            <p id="win-comment">Отличный результат!</p>
+            <button id="restart-btn">Играть снова</button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 Жанна. Игра «Кто где живёт»</p>
+    </footer>
+
+    <audio id="bg-music" loop><source src="sounds/background.mp3" type="audio/mpeg"></audio>
+    <audio id="correct-sound"><source src="sounds/correct.mp3" type="audio/mpeg"></audio>
+    <audio id="wrong-sound"><source src="sounds/wrong.mp3" type="audio/mpeg"></audio>
+    <audio id="win-sound"><source src="sounds/win.mp3" type="audio/mpeg"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

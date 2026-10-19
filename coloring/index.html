@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Раскрась картинку</title>
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    text-align: center;
+    min-height: 100vh;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  body { padding: 10px; }
+  h1 { color: #333; font-size: 20px; margin: 5px 0 12px; }
+
+  .menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 10px;
+    max-width: 700px;
+    margin: 0 auto 12px;
+    padding: 0 5px;
+  }
+  .menu-item {
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .menu-item:hover, .menu-item:active { transform: scale(1.05); border-color: #4a90d9; }
+  .menu-item img { width: 100%; height: 70px; object-fit: contain; display: block; pointer-events: none; }
+  .menu-item span { font-size: 12px; font-weight: bold; color: #555; margin-top: 3px; }
+
+  .game { display: none; }
+  .game.active { display: block; }
+
+  .canvas-wrapper {
+    display: inline-block;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    max-width: 100%;
+    position: relative;
+  }
+  canvas {
+    display: block;
+    background: #fff;
+    touch-action: none;
+    max-width: 100%;
+    height: auto;
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M4 28 L4 24 L20 8 L24 12 L8 28 Z' fill='%23d2691e' stroke='%23222' stroke-width='1.5'/><path d='M20 8 L24 12 L26 10 C27 9 27 7 26 6 L24 4 C23 3 21 3 20 4 L18 6 Z' fill='%23ffd700' stroke='%23222' stroke-width='1.5'/></svg>") 4 28, crosshair;
+  }
+
+  @keyframes bounce {
+    0%   { transform: scale(1) rotate(0deg); }
+    25%  { transform: scale(1.05) rotate(-2deg); }
+    50%  { transform: scale(1.08) rotate(2deg); }
+    75%  { transform: scale(1.05) rotate(-1deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+  .canvas-wrapper.celebrate {
+    animation: bounce 1.2s ease-in-out;
+    box-shadow: 0 0 30px 5px rgba(255, 215, 0, 0.8);
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 12px auto 5px;
+    max-width: 700px;
+    padding: 8px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .toolbar-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #555;
+  }
+  .brush-sizes { display: flex; gap: 6px; align-items: center; }
+  .brush-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 3px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.1s;
+    flex-shrink: 0;
+  }
+  .brush-btn:hover { transform: scale(1.1); }
+  .brush-btn.active { border-color: #333; background: #e0e0e0; }
+  .brush-btn .dot { background: #333; border-radius: 50%; display: block; }
+  .brush-btn[data-size="4"]  .dot { width: 3px;  height: 3px;  }
+  .brush-btn[data-size="10"] .dot { width: 6px;  height: 6px;  }
+  .brush-btn[data-size="25"] .dot { width: 14px; height: 14px; }
+  .brush-btn[data-size="45"] .dot { width: 22px; height: 22px; }
+
+  .tool-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 3px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.1s;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .tool-btn:hover { transform: scale(1.1); }
+  .tool-btn.active { border-color: #333; background: #ffe8b3; }
+
+  .palette {
+    margin: 8px auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    max-width: 700px;
+    padding: 8px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .color {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 3px solid #ccc;
+    cursor: pointer;
+    transition: 0.1s;
+    flex-shrink: 0;
+  }
+  .color:hover { transform: scale(1.1); }
+  .color.active { border-color: #333; transform: scale(1.15); }
+  .color.eraser {
+    border: 3px dashed #999;
+    background: #fff !important;
+  }
+
+  .buttons {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  button.main {
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    transition: 0.2s;
+    flex-shrink: 0;
+  }
+  button.main:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+  button.main:active { transform: translateY(0); }
+  button.main:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  #backBtn  { background: #4a90d9; }
+  #undoBtn  { background: #f5a623; }
+  #clearBtn { background: #e74c3c; }
+  #saveBtn  { background: #27ae60; }
+
+  @media (max-width: 600px) {
+    body { padding: 6px; }
+    h1 { font-size: 17px; margin: 4px 0 8px; }
+    .menu { grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }
+    .menu-item img { height: 55px; }
+    .menu-item span { font-size: 11px; }
+    .toolbar { gap: 6px; padding: 6px; }
+    .toolbar-label { font-size: 11px; }
+    .brush-btn, .tool-btn { width: 36px; height: 36px; }
+    .color { width: 32px; height: 32px; }
+    button.main { padding: 8px 12px; font-size: 13px; }
+    .palette { gap: 5px; padding: 6px; }
+  }
+</style>
+</head>
+<body>
+
+  <div id="menuScreen">
+    <h1>🎨 Выбери картинку</h1>
+    <div class="menu" id="menu"></div>
+  </div>
+
+  <div class="game" id="game">
+    <h1 id="gameTitle">Раскрась картинку</h1>
+
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <canvas id="canvas" width="600" height="450"></canvas>
+    </div>
+
+    <div class="toolbar">
+      <span class="toolbar-label">Кисть:</span>
+      <div class="brush-sizes" id="brushSizes">
+        <div class="brush-btn" data-size="4"  title="Очень тонкая"><span class="dot"></span></div>
+        <div class="brush-btn" data-size="10" title="Тонкая"><span class="dot"></span></div>
+        <div class="brush-btn active" data-size="25" title="Средняя"><span class="dot"></span></div>
+        <div class="brush-btn" data-size="45" title="Толстая"><span class="dot"></span></div>
+      </div>
+
+      <span class="toolbar-label">Инструмент:</span>
+      <div class="tool-btn active" id="brushTool" title="Кисть">🖌</div>
+      <div class="tool-btn" id="fillTool" title="Заливка">🪣</div>
+    </div>
+
+    <div class="palette" id="palette"></div>
+
+    <div class="buttons">
+      <button class="main" id="backBtn">← Назад</button>
+      <button class="main" id="undoBtn">↶ Отменить</button>
+      <button class="main" id="clearBtn">🗑 Очистить</button>
+      <button class="main" id="saveBtn">💾 Сохранить</button>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// СПИСОК ПЕРСОНАЖЕЙ
+// ============================================================
+const CHARACTERS = [
+  { name: 'Ящерка',    file: 'lizard.png' },
+  { name: 'Поросёнок', file: 'pigle.png' },
+  { name: 'Барт',      file: 'bart.png' },
+  { name: 'Черепашка', file: 'turtle.png' },
+  { name: 'Призрак',   file: 'ghost.png' },
+  { name: 'Пикачу',    file:  'pikachu.png' }
+];
+
+const COLORS = [
+  '#FF0000', '#FF4081', '#FF8FB1',
+  '#FF6B00', '#FFD700', '#FFF176',
+  '#00C853', '#7ED321', '#1B5E20',
+  '#00B0FF', '#2962FF', '#0D47A1',
+  '#8E24AA', '#BA68C8',
+  '#795548', '#D7CCC8',
+  '#000000', '#9E9E9E', '#FFFFFF'
+];
+
+// ============================================================
+// ПЕРЕМЕННЫЕ
+// ============================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const canvasWrapper = document.getElementById('canvasWrapper');
+
+let currentColor = '#FF0000';
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+let brushSize = 25;
+let currentTool = 'brush';
+
+let history = [];
+const MAX_HISTORY = 30;
+
+let outlineImg = new Image();
+let hasCelebrated = false;
+
+// ============================================================
+// МЕНЮ
+// ============================================================
+function buildMenu() {
+  const menu = document.getElementById('menu');
+  menu.innerHTML = '';
+  CHARACTERS.forEach(char => {
+    const item = document.createElement('div');
+    item.className = 'menu-item';
+    const img = document.createElement('img');
+    img.src = char.file;
+    img.alt = char.name;
+    img.onerror = () => { img.style.background = '#eee'; img.alt = 'Нет'; };
+    const span = document.createElement('span');
+    span.textContent = char.name;
+    item.appendChild(img);
+    item.appendChild(span);
+    item.addEventListener('click', () => startGame(char.file, char.name));
+    menu.appendChild(item);
+  });
+}
+
+function startGame(file, name) {
+  console.log('Старт:', file);
+  document.getElementById('menuScreen').style.display = 'none';
+  document.getElementById('game').classList.add('active');
+  document.getElementById('gameTitle').textContent = 'Раскрась: ' + name;
+
+  history = [];
+  hasCelebrated = false;
+  updateUndoButton();
+  canvasWrapper.classList.remove('celebrate');
+
+  outlineImg = new Image();
+  outlineImg.crossOrigin = 'anonymous';
+  outlineImg.onload = () => {
+    redraw();
+    updateUndoButton();
+    console.log('Картинка загружена:', file);
+  };
+  outlineImg.onerror = () => {
+    console.error('Не найдена картинка:', file);
+    alert('Картинка не найдена: ' + file);
+  };
+  outlineImg.src = file;
+
+  currentColor = '#FF0000';
+  brushSize = 25;
+  currentTool = 'brush';
+  updatePaletteActive();
+  updateBrushActive();
+  updateToolActive();
+}
+
+function showMenu() {
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('menuScreen').style.display = 'block';
+}
+
+// ============================================================
+// ПАЛИТРА
+// ============================================================
+function buildPalette() {
+  const palette = document.getElementById('palette');
+  palette.innerHTML = '';
+  COLORS.forEach((color) => {
+    const btn = document.createElement('div');
+    btn.className = 'color';
+    btn.style.background = color;
+    btn.dataset.color = color;
+    if (color === '#FFFFFF') { btn.classList.add('eraser'); btn.title = 'Ластик'; }
+    if (color === '#FF0000') btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.color').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentColor = color;
+      console.log('Цвет:', color);
+    });
+    palette.appendChild(btn);
+  });
+}
+
+function updatePaletteActive() {
+  document.querySelectorAll('.color').forEach(b => {
+    b.classList.toggle('active', b.dataset.color === currentColor);
+  });
+}
+
+// ============================================================
+// РАЗМЕР КИСТИ
+// ============================================================
+function initBrushSizes() {
+  document.querySelectorAll('.brush-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      brushSize = parseInt(btn.dataset.size, 10);
+    });
+  });
+}
+
+function updateBrushActive() {
+  document.querySelectorAll('.brush-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.size, 10) === brushSize);
+  });
+}
+
+// ============================================================
+// ИНСТРУМЕНТЫ
+// ============================================================
+function initTools() {
+  document.getElementById('brushTool').addEventListener('click', () => {
+    currentTool = 'brush';
+    updateToolActive();
+  });
+  document.getElementById('fillTool').addEventListener('click', () => {
+    currentTool = 'fill';
+    updateToolActive();
+  });
+}
+
+function updateToolActive() {
+  document.getElementById('brushTool').classList.toggle('active', currentTool === 'brush');
+  document.getElementById('fillTool').classList.toggle('active', currentTool === 'fill');
+}
+
+// ============================================================
+// ИСТОРИЯ
+// ============================================================
+function saveHistory() {
+  const snapshot = document.createElement('canvas');
+  snapshot.width = canvas.width;
+  snapshot.height = canvas.height;
+  const sctx = snapshot.getContext('2d');
+  sctx.drawImage(canvas, 0, 0);
+  history.push(snapshot);
+  if (history.length > MAX_HISTORY) history.shift();
+  updateUndoButton();
+}
+
+function undo() {
+  if (history.length === 0) return;
+  const previous = history.pop();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(previous, 0, 0);
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  document.getElementById('undoBtn').disabled = history.length === 0;
+}
+
+// ============================================================
+// ПЕРЕРИСОВКА ФОНА
+// ============================================================
+function redraw() {
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (outlineImg.complete && outlineImg.naturalWidth > 0) {
+    const imgRatio = outlineImg.naturalWidth / outlineImg.naturalHeight;
+    const canvasRatio = canvas.width / canvas.height;
+    let w, h, x, y;
+    if (imgRatio > canvasRatio) {
+      w = canvas.width; h = canvas.width / imgRatio; x = 0; y = (canvas.height - h) / 2;
+    } else {
+      h = canvas.height; w = canvas.height * imgRatio; x = (canvas.width - w) / 2; y = 0;
+    }
+    ctx.drawImage(outlineImg, x, y, w, h);
+  }
+}
+
+// ============================================================
+// ЗАЛИВКА
+// ============================================================
+function hexToRgb(hex) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? {
+    r: parseInt(r[1], 16),
+    g: parseInt(r[2], 16),
+    b: parseInt(r[3], 16)
+  } : null;
+}
+
+function colorsMatch(a, b, tolerance = 32) {
+  return Math.abs(a[0] - b[0]) < tolerance &&
+         Math.abs(a[1] - b[1]) < tolerance &&
+         Math.abs(a[2] - b[2]) < tolerance &&
+         Math.abs(a[3] - b[3]) < tolerance;
+}
+
+function floodFill(startX, startY, fillColorHex) {
+  const w = canvas.width;
+  const h = canvas.height;
+  if (startX < 0 || startY < 0 || startX >= w || startY >= h) return;
+
+  let imageData;
+  try {
+    imageData = ctx.getImageData(0, 0, w, h);
+  } catch (e) {
+    console.error('Ошибка getImageData:', e);
+    alert('Заливка не работает. Откройте игру через GitHub Pages.');
+    return;
+  }
+
+  const data = imageData.data;
+  const fillColor = hexToRgb(fillColorHex);
+  if (!fillColor) return;
+
+  const startIdx = (startY * w + startX) * 4;
+  const targetColor = [
+    data[startIdx], data[startIdx + 1], data[startIdx + 2], data[startIdx + 3]
+  ];
+
+  if (colorsMatch(targetColor, [fillColor.r, fillColor.g, fillColor.b, 255], 10)) return;
+
+  const stack = [[startX, startY]];
+  const visited = new Uint8Array(w * h);
+
+  while (stack.length > 0) {
+    const [x, y] = stack.pop();
+    if (x < 0 || x >= w || y < 0 || y >= h) continue;
+    const vIdx = y * w + x;
+    if (visited[vIdx]) continue;
+
+    const idx = vIdx * 4;
+    const currentColor = [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
+    if (!colorsMatch(currentColor, targetColor)) continue;
+
+    visited[vIdx] = 1;
+    data[idx]     = fillColor.r;
+    data[idx + 1] = fillColor.g;
+    data[idx + 2] = fillColor.b;
+    data[idx + 3] = 255;
+
+    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+// ============================================================
+// АНИМАЦИЯ
+// ============================================================
+function celebrate() {
+  if (hasCelebrated) return;
+  hasCelebrated = true;
+  canvasWrapper.classList.add('celebrate');
+  setTimeout(() => canvasWrapper.classList.remove('celebrate'), 1300);
+}
+
+// ============================================================
+// РИСОВАНИЕ
+// ============================================================
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+function drawDot(pos) {
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, brushSize / 2, 0, Math.PI * 2);
+  ctx.fillStyle = currentColor;
+  ctx.fill();
+}
+
+function drawLine(from, to) {
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.strokeStyle = currentColor;
+  ctx.lineWidth = brushSize;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+}
+
+// ============================================================
+// МЫШЬ
+// ============================================================
+canvas.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  saveHistory();
+  const pos = getPos(e);
+
+  if (currentTool === 'fill') {
+    floodFill(Math.floor(pos.x), Math.floor(pos.y), currentColor);
+    celebrate();
+    return;
+  }
+
+  isDrawing = true;
+  lastX = pos.x;
+  lastY = pos.y;
+  drawDot(pos);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDrawing) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  drawLine({ x: lastX, y: lastY }, pos);
+  lastX = pos.x;
+  lastY = pos.y;
+});
+
+canvas.addEventListener('mouseup', () => { isDrawing = false; });
+canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ============================================================
+// ТАЧ
+// ============================================================
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  saveHistory();
+  const pos = getPos(e);
+
+  if (currentTool === 'fill') {
+    floodFill(Math.floor(pos.x), Math.floor(pos.y), currentColor);
+    celebrate();
+    return;
+  }
+
+  isDrawing = true;
+  lastX = pos.x;
+  lastY = pos.y;
+  drawDot(pos);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (!isDrawing) return;
+  e.preventDefault();
+  const pos = getPos(e);
+  drawLine({ x: lastX, y: lastY }, pos);
+  lastX = pos.x;
+  lastY = pos.y;
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { isDrawing = false; });
+
+// ============================================================
+// КНОПКИ
+// ============================================================
+document.getElementById('backBtn').addEventListener('click', showMenu);
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('clearBtn').addEventListener('click', () => {
+  saveHistory();
+  redraw();
+  hasCelebrated = false;
+});
+document.getElementById('saveBtn').addEventListener('click', () => {
+  try {
+    const temp = document.createElement('canvas');
+    temp.width = canvas.width;
+    temp.height = canvas.height;
+    const tctx = temp.getContext('2d');
+    tctx.fillStyle = '#FFFFFF';
+    tctx.fillRect(0, 0, temp.width, temp.height);
+    tctx.drawImage(canvas, 0, 0);
+    const dataUrl = temp.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = 'my-coloring.png';
+    link.href = dataUrl;
+    link.click();
+  } catch (e) {
+    console.error('Ошибка сохранения:', e);
+    alert('Не удалось сохранить.');
+  }
+});
+
+// ============================================================
+// ЗАПУСК
+// ============================================================
+buildMenu();
+buildPalette();
+initBrushSizes();
+initTools();
+updateUndoButton();
+console.log('Игра-раскраска готова');
+</script>
+</body>
+</html>

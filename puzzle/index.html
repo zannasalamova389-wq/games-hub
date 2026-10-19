@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пазл — Игра для детей</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <h1>Пазл</h1>
+        <p>Собери картинку из частей</p>
+        <button id="sound-toggle" class="sound-btn">🔊 Звук вкл</button>
+    </header>
+
+    <main>
+        <div class="controls">
+            <div class="control-group">
+                <label>Уровень:</label>
+                <button class="level-btn active" data-size="3">3×3</button>
+                <button class="level-btn" data-size="4">4×4</button>
+                <button class="level-btn" data-size="5">5×5</button>
+            </div>
+
+            <div class="control-group">
+                <label>Картинка:</label>
+                <select id="image-select">
+                    <option value="images/puzzle1.jpg">Пикачу</option>
+                    <option value="images/puzzle2.jpg">Губка Боб</option>
+                    <option value="images/puzzle3.jpg">Соник</option>
+                    <option value="images/puzzle4.jpg">Марио</option>
+                    <option value="images/puzzle5.jpg">Гринч</option>
+                    <option value="images/puzzle6.jpg">Белоснежка</option>
+                </select>
+            </div>
+
+            <button id="start-btn" class="start-btn">Начать игру</button>
+        </div>
+
+        <div class="stats">
+            <p>Время: <span id="timer">00:00</span></p>
+            <p>Ходы: <span id="moves">0</span></p>
+        </div>
+
+        <div class="puzzle-container">
+            <div class="puzzle-board" id="puzzle-board"></div>
+            <div class="preview">
+                <p>Образец:</p>
+                <img id="preview-img" src="" alt="Образец">
+            </div>
+        </div>
+
+        <div class="win-message" id="win-message">
+            <h2>🎉 Молодец! Пазл собран!</h2>
+            <p>Время: <span id="final-time">00:00</span></p>
+            <p>Ходы: <span id="final-moves">0</span></p>
+            <button id="restart-btn">Играть снова</button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 Жанна. Игра «Пазл»</p>
+    </footer>
+
+    <!-- Фоновая музыка -->
+    <audio id="bg-music" loop>
+        <source src="sounds/background.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="click-sound"><source src="sounds/click.mp3" type="audio/mpeg"></audio>
+    <audio id="match-sound"><source src="sounds/match.mp3" type="audio/mpeg"></audio>
+    <audio id="win-sound"><source src="sounds/win.mp3" type="audio/mpeg"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>

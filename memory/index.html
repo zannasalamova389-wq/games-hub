@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Найди пару — Игра для детей</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <h1>Найди пару</h1>
+        <p>Игра на память с рисунками Жанны</p>
+        <button id="sound-toggle" class="sound-btn">🔊 Звук вкл</button>
+    </header>
+
+    <main>
+        <div class="controls">
+            <button class="level-btn active" data-level="1">Уровень 1 (6 пар)</button>
+            <button class="level-btn" data-level="2">Уровень 2 (8 пар)</button>
+            <button class="level-btn" data-level="3">Уровень 3 (12 пар)</button>
+        </div>
+
+        <div class="stats">
+            <p>Ходы: <span id="moves">0</span></p>
+            <p>Найдено пар: <span id="pairs-found">0</span> / <span id="pairs-total">6</span></p>
+        </div>
+
+        <div class="game-board" id="game-board"></div>
+
+        <div class="win-message" id="win-message">
+            <h2>🎉 Молодец! Ты нашёл все пары!</h2>
+            <p>Ходов: <span id="final-moves">0</span></p>
+            <button id="restart-btn">Играть снова</button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 Жанна. Игра «Найди пару»</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
